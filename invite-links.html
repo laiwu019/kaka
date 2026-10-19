@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>邀请链接生成器</title>
+    <title>邀请链接提取器</title>
     <style>
         :root {
             --bg-deep: #05070C;
@@ -22,19 +22,13 @@
             --spacing-sm: clamp(8px, 1.5vw, 12px);
             --spacing-md: clamp(16px, 3vw, 24px);
             --spacing-lg: clamp(24px, 4vw, 36px);
-            --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            --font-mono: "SF Mono", Monaco, Consolas, monospace;
             --size-display: clamp(24px, 5vw, 32px);
             --size-title: clamp(18px, 3.5vw, 22px);
             --size-body: clamp(14px, 2.5vw, 16px);
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: var(--font-body);
             font-size: var(--size-body);
@@ -44,54 +38,62 @@
             min-height: 100vh;
             padding: var(--spacing-md);
         }
-
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
+        .container { max-width: 600px; margin: 0 auto; }
         h1 {
-            font-family: var(--font-display);
             font-size: var(--size-display);
             font-weight: 600;
             letter-spacing: -0.02em;
             margin-bottom: var(--spacing-lg);
             text-align: center;
         }
-
         .card {
             background: var(--bg-raised);
             border-radius: var(--radius-card);
             padding: var(--spacing-lg);
             margin-bottom: var(--spacing-md);
         }
-
-        .input-group {
+        .card-title {
+            font-size: var(--size-title);
+            font-weight: 600;
             margin-bottom: var(--spacing-md);
         }
-
-        label {
-            display: block;
-            margin-bottom: var(--spacing-sm);
-            color: var(--text-secondary);
-            font-size: calc(var(--size-body) * 0.875);
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
         }
-
-        input[type="text"], input[type="url"] {
-            width: 100%;
-            background: var(--bg-elevated);
-            border: 1px solid transparent;
+        .stat-card {
+            background: var(--bg-base);
             border-radius: var(--radius-card);
-            padding: 14px var(--spacing-md);
-            color: var(--text-primary);
-            font-size: var(--size-body);
+            padding: var(--spacing-md);
+            text-align: center;
         }
-
-        input:focus {
-            outline: none;
-            border-color: var(--accent);
+        .stat-value { font-size: var(--size-title); font-weight: 600; color: var(--accent); }
+        .stat-label { font-size: calc(var(--size-body) * 0.875); color: var(--text-secondary); margin-top: 4px; }
+        .link-display {
+            background: var(--bg-elevated);
+            border-radius: var(--radius-card);
+            padding: var(--spacing-lg);
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm);
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: var(--spacing-md);
         }
-
+        .link-display:hover { background: var(--bg-overlay); }
+        .link-text {
+            font-family: var(--font-mono);
+            font-size: calc(var(--size-body) * 0.95);
+            color: var(--accent);
+            word-break: break-all;
+            text-align: center;
+        }
+        .link-hint { font-size: calc(var(--size-body) * 0.875); color: var(--text-secondary); }
         .btn {
             background: var(--accent);
             color: var(--bg-deep);
@@ -104,95 +106,40 @@
             width: 100%;
             transition: all 0.2s;
         }
-
-        .btn:hover {
-            background: var(--accent-dim);
-            transform: translateY(-1px);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        .btn-secondary {
+        .btn:hover { background: var(--accent-dim); }
+        .btn-secondary { background: var(--bg-elevated); color: var(--text-primary); }
+        .btn-secondary:hover { background: var(--bg-overlay); }
+        .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+        .btn-danger:hover { background: rgba(248,113,113,0.1); }
+        .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-sm); margin-top: var(--spacing-sm); }
+        textarea {
+            width: 100%;
+            min-height: 140px;
             background: var(--bg-elevated);
-            color: var(--text-primary);
-        }
-
-        .btn-secondary:hover {
-            background: var(--bg-overlay);
-        }
-
-        .btn-danger {
-            background: var(--danger);
-            color: var(--text-primary);
-        }
-
-        .customer-list {
-            display: grid;
-            gap: var(--spacing-sm);
-            max-height: 60vh;
-            overflow-y: auto;
-        }
-
-        .customer-item {
-            background: var(--bg-elevated);
+            border: 1px solid transparent;
             border-radius: var(--radius-card);
             padding: var(--spacing-md);
-            display: grid;
-            gap: var(--spacing-sm);
-        }
-
-        .customer-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .customer-name {
-            font-weight: 600;
-            font-size: var(--size-title);
-            color: var(--accent);
-        }
-
-        .delete-btn {
-            background: transparent;
-            border: none;
-            color: var(--danger);
-            cursor: pointer;
-            font-size: 20px;
-            padding: 4px 8px;
-        }
-
-        .link-display {
-            background: var(--bg-overlay);
-            border-radius: 12px;
-            padding: 12px;
-            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
             font-size: calc(var(--size-body) * 0.875);
+            resize: vertical;
+            margin-bottom: var(--spacing-md);
+        }
+        textarea:focus { outline: none; border-color: var(--accent); }
+        .history { display: grid; gap: var(--spacing-sm); max-height: 300px; overflow-y: auto; }
+        .history-item {
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            padding: 10px 12px;
+            font-family: var(--font-mono);
+            font-size: calc(var(--size-body) * 0.8);
             word-break: break-all;
-            color: var(--success);
+            color: var(--text-secondary);
             cursor: pointer;
-            transition: background 0.2s;
         }
-
-        .link-display:hover {
-            background: var(--bg-raised);
-        }
-
-        .copy-hint {
-            font-size: calc(var(--size-body) * 0.75);
-            color: var(--text-secondary);
-            text-align: center;
-            margin-top: 4px;
-        }
-
-        .empty-state {
-            text-align: center;
-            color: var(--text-secondary);
-            padding: var(--spacing-lg);
-        }
-
+        .history-item:hover { background: var(--bg-overlay); color: var(--text-primary); }
+        .history-time { display: block; font-family: var(--font-body); font-size: 12px; color: var(--text-secondary); margin-bottom: 2px; }
+        .empty { text-align: center; color: var(--text-secondary); padding: var(--spacing-md); }
         .toast {
             position: fixed;
             top: var(--spacing-md);
@@ -207,234 +154,181 @@
             transition: all 0.3s;
             z-index: 1000;
         }
-
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-
-        .stats {
-            text-align: center;
-            color: var(--text-secondary);
-            margin-bottom: var(--spacing-md);
-            font-size: calc(var(--size-body) * 0.875);
-        }
-
-        .stats-number {
-            color: var(--accent);
-            font-weight: 600;
-            font-size: var(--size-title);
-        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔗 邀请链接生成器</h1>
+        <h1>邀请链接提取器</h1>
 
         <div class="card">
-            <div class="input-group">
-                <label>邀请链接模板</label>
-                <input type="url" id="baseUrl" placeholder="例如：https://example.com/invite?ref=" value="https://example.com/invite?ref=">
-            </div>
-
-            <div class="input-group">
-                <label>搜索顾客</label>
-                <input type="text" id="searchInput" placeholder="输入顾客名称搜索..." oninput="handleSearch()">
-            </div>
-
             <div class="stats">
-                共 <span class="stats-number" id="totalCount">0</span> 个顾客
-                <span id="searchStats"></span>
+                <div class="stat-card">
+                    <div class="stat-value" id="leftCount">0</div>
+                    <div class="stat-label">剩余链接</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="usedCount">0</div>
+                    <div class="stat-label">已提取</div>
+                </div>
             </div>
 
-            <div class="customer-list" id="customerList">
-                <div class="empty-state">还没有导入顾客</div>
+            <div class="link-display" onclick="copyCurrent()">
+                <div class="link-text" id="linkText">点击下方按钮提取链接</div>
+                <div class="link-hint" id="linkHint">等待提取...</div>
+            </div>
+            <button class="btn" onclick="extractLink()">提取一条链接（自动复制）</button>
+        </div>
+
+        <div class="card">
+            <div class="card-title">存入链接</div>
+            <textarea id="importInput" placeholder="每行一条链接，可以一次粘贴很多条&#10;例如：&#10;https://example.com/invite?ref=AAA&#10;https://example.com/invite?ref=BBB"></textarea>
+            <button class="btn" onclick="importLinks()">存入链接</button>
+            <div class="btn-row">
+                <button class="btn btn-secondary" onclick="exportLeft()">复制剩余全部</button>
+                <button class="btn btn-danger" onclick="clearAll()">清空所有</button>
             </div>
         </div>
 
         <div class="card">
-            <h2 style="font-size: var(--size-title); margin-bottom: var(--spacing-md);">批量导入顾客</h2>
-            <textarea id="importInput" placeholder="每行一个顾客名称&#10;例如：&#10;张三&#10;李四&#10;王五" style="width: 100%; min-height: 120px; background: var(--bg-elevated); border: 1px solid transparent; border-radius: var(--radius-card); padding: var(--spacing-md); color: var(--text-primary); font-size: var(--size-body); resize: vertical; margin-bottom: var(--spacing-md);"></textarea>
-            <button class="btn" onclick="importCustomers()">导入顾客</button>
-            <button class="btn btn-danger" onclick="clearAll()" style="margin-top: var(--spacing-sm);">清空所有</button>
+            <div class="card-title">提取记录（点击可再次复制）</div>
+            <div class="history" id="history"></div>
+            <div class="btn-row" style="grid-template-columns: 1fr;">
+                <button class="btn btn-secondary" onclick="clearHistory()">清空记录</button>
+            </div>
         </div>
     </div>
 
     <div class="toast" id="toast"></div>
 
     <script>
-        const STORAGE_KEY = 'invite_customers';
-        let allCustomers = [];
+        const POOL_KEY = 'invite_link_pool';
+        const HISTORY_KEY = 'invite_link_history';
+        let currentLink = '';
 
-        function loadCustomers() {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            allCustomers = stored ? JSON.parse(stored) : [];
-            return allCustomers;
+        function load(key) {
+            try { return JSON.parse(localStorage.getItem(key)) || []; } catch (e) { return []; }
+        }
+        function save(key, value) {
+            localStorage.setItem(key, JSON.stringify(value));
         }
 
-        function saveCustomers(customers) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(customers));
-            allCustomers = customers;
-            renderList(customers);
+        function escapeHtml(s) {
+            return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
         }
 
-        function loadBaseUrl() {
-            return localStorage.getItem('invite_base_url') || 'https://example.com/invite?ref=';
-        }
+        function refresh() {
+            const pool = load(POOL_KEY);
+            const history = load(HISTORY_KEY);
+            document.getElementById('leftCount').textContent = pool.length;
+            document.getElementById('usedCount').textContent = history.length;
 
-        function saveBaseUrl(url) {
-            localStorage.setItem('invite_base_url', url);
-        }
-
-        function handleSearch() {
-            const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
-
-            if (!keyword) {
-                renderList(allCustomers);
-                document.getElementById('searchStats').textContent = '';
+            const box = document.getElementById('history');
+            if (history.length === 0) {
+                box.innerHTML = '<div class="empty">还没有提取记录</div>';
                 return;
             }
-
-            const filtered = allCustomers.filter(c =>
-                c.name.toLowerCase().includes(keyword)
-            );
-
-            renderList(filtered);
-            document.getElementById('searchStats').innerHTML =
-                `, 找到 <span class="stats-number">${filtered.length}</span> 个匹配`;
-        }
-
-        function importCustomers() {
-            const input = document.getElementById('importInput').value.trim();
-
-            if (!input) {
-                showToast('请输入顾客名称');
-                return;
-            }
-
-            const newNames = input.split('\n')
-                .map(line => line.trim())
-                .filter(line => line.length > 0);
-
-            if (newNames.length === 0) {
-                showToast('没有有效的顾客名称');
-                return;
-            }
-
-            const customers = loadCustomers();
-            const existingNames = new Set(customers.map(c => c.name));
-            let addedCount = 0;
-
-            newNames.forEach(name => {
-                if (!existingNames.has(name)) {
-                    customers.push({ name, timestamp: Date.now() });
-                    existingNames.add(name);
-                    addedCount++;
-                }
+            box.innerHTML = history.slice().reverse().map((h, i) =>
+                `<div class="history-item" data-i="${history.length - 1 - i}"><span class="history-time">${escapeHtml(h.time)}</span>${escapeHtml(h.link)}</div>`
+            ).join('');
+            box.querySelectorAll('.history-item').forEach(el => {
+                el.onclick = () => copyText(history[el.dataset.i].link, '已复制这条链接');
             });
-
-            saveCustomers(customers);
-            document.getElementById('importInput').value = '';
-            document.getElementById('searchInput').value = '';
-            showToast(`成功导入 ${addedCount} 个顾客` + (newNames.length > addedCount ? `，${newNames.length - addedCount} 个已存在` : ''));
         }
 
-        function deleteCustomer(name) {
-            if (!confirm(`确定删除顾客「${name}」吗？`)) {
-                return;
-            }
-
-            let customers = loadCustomers();
-            customers = customers.filter(c => c.name !== name);
-            saveCustomers(customers);
-            document.getElementById('searchInput').value = '';
-            showToast('已删除');
-        }
-
-        function copyLink(name) {
-            const baseUrl = document.getElementById('baseUrl').value.trim();
-
-            if (!baseUrl) {
-                showToast('请先设置邀请链接模板');
-                return;
-            }
-
-            saveBaseUrl(baseUrl);
-
-            const link = baseUrl + encodeURIComponent(name);
-
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(link).then(() => {
-                    showToast(`已复制「${name}」的邀请链接`);
-                });
+        function copyText(text, msg) {
+            const done = () => showToast(msg);
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
             } else {
-                const textarea = document.createElement('textarea');
-                textarea.value = link;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                showToast(`已复制「${name}」的邀请链接`);
+                fallbackCopy(text, done);
             }
+        }
+        function fallbackCopy(text, done) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy'); done(); } catch (e) { showToast('复制失败，请长按链接手动复制'); }
+            document.body.removeChild(ta);
+        }
+
+        function extractLink() {
+            const pool = load(POOL_KEY);
+            if (pool.length === 0) {
+                showToast('没有剩余链接了，请先存入');
+                return;
+            }
+            const link = pool.shift();
+            save(POOL_KEY, pool);
+            const history = load(HISTORY_KEY);
+            history.push({ link, time: new Date().toLocaleString('zh-CN') });
+            save(HISTORY_KEY, history);
+
+            currentLink = link;
+            document.getElementById('linkText').textContent = link;
+            document.getElementById('linkHint').textContent = '已自动复制，点击这里可再次复制';
+            copyText(link, '已提取并复制');
+            refresh();
+        }
+
+        function copyCurrent() {
+            if (!currentLink) return;
+            copyText(currentLink, '已复制');
+        }
+
+        function importLinks() {
+            const input = document.getElementById('importInput');
+            const lines = input.value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+            if (lines.length === 0) {
+                showToast('请先粘贴链接');
+                return;
+            }
+            const pool = load(POOL_KEY);
+            const used = new Set(load(HISTORY_KEY).map(h => h.link));
+            const exist = new Set(pool);
+            let added = 0, skipped = 0;
+            lines.forEach(l => {
+                if (exist.has(l) || used.has(l)) { skipped++; return; }
+                pool.push(l); exist.add(l); added++;
+            });
+            save(POOL_KEY, pool);
+            input.value = '';
+            showToast(skipped ? `存入 ${added} 条，跳过重复 ${skipped} 条` : `成功存入 ${added} 条`);
+            refresh();
+        }
+
+        function exportLeft() {
+            const pool = load(POOL_KEY);
+            if (pool.length === 0) { showToast('没有剩余链接'); return; }
+            copyText(pool.join('\n'), `已复制剩余 ${pool.length} 条`);
         }
 
         function clearAll() {
-            if (!confirm('确定清空所有顾客吗？此操作不可恢复！')) {
-                return;
-            }
-
-            localStorage.removeItem(STORAGE_KEY);
-            allCustomers = [];
-            document.getElementById('searchInput').value = '';
-            renderList([]);
-            showToast('已清空');
+            if (!confirm('确定清空所有剩余链接吗？此操作不能撤销')) return;
+            localStorage.removeItem(POOL_KEY);
+            showToast('已清空剩余链接');
+            refresh();
         }
 
-        function renderList(customers) {
-            const container = document.getElementById('customerList');
-            const totalCount = document.getElementById('totalCount');
-            const baseUrl = document.getElementById('baseUrl').value.trim();
-
-            totalCount.textContent = allCustomers.length;
-
-            if (customers.length === 0) {
-                container.innerHTML = '<div class="empty-state">' +
-                    (allCustomers.length === 0 ? '还没有导入顾客' : '没有找到匹配的顾客') +
-                    '</div>';
-                return;
-            }
-
-            container.innerHTML = customers.map(customer => {
-                const link = baseUrl + encodeURIComponent(customer.name);
-                return `
-                    <div class="customer-item">
-                        <div class="customer-header">
-                            <div class="customer-name">${customer.name}</div>
-                            <button class="delete-btn" onclick="deleteCustomer('${customer.name.replace(/'/g, "\\'")}')">×</button>
-                        </div>
-                        <div class="link-display" onclick="copyLink('${customer.name.replace(/'/g, "\\'")}')">${link}</div>
-                        <div class="copy-hint">点击复制链接</div>
-                    </div>
-                `;
-            }).join('');
+        function clearHistory() {
+            if (!confirm('确定清空提取记录吗？')) return;
+            localStorage.removeItem(HISTORY_KEY);
+            showToast('已清空记录');
+            refresh();
         }
 
         function showToast(message) {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 2000);
+            const t = document.getElementById('toast');
+            t.textContent = message;
+            t.classList.add('show');
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => t.classList.remove('show'), 2000);
         }
 
-        document.getElementById('baseUrl').value = loadBaseUrl();
-        document.getElementById('baseUrl').addEventListener('input', () => {
-            handleSearch();
-        });
-
-        loadCustomers();
-        renderList(allCustomers);
+        refresh();
     </script>
 </body>
 </html>
